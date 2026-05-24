@@ -1,0 +1,587 @@
+Build a COMPLETE production-ready WEBSITE called “CabScan”.
+
+IMPORTANT:
+This is a WEBSITE only.
+NOT a mobile application.
+
+The website must be:
+
+- professional
+- startup-grade
+- scalable
+- mobile responsive
+- production-ready
+- error-free
+- Vercel/Replit/Firebase compatible
+
+IMPORTANT ENGINEERING REQUIREMENTS:
+
+- ZERO TypeScript errors
+- ZERO build errors
+- ZERO broken imports
+- ZERO unsafe casts
+- npm run build must succeed
+- pnpm run build must succeed
+- No placeholder logic
+- No fake demo UI
+- Clean reusable architecture
+
+==================================================
+BRAND
+
+Name:
+CabScan
+
+Tagline:
+“Smarter Rides. Better Journeys.”
+
+Theme:
+Modern global mobility-tech startup.
+
+Design Style:
+
+- futuristic
+- premium
+- glassmorphism
+- startup aesthetic
+- Stripe/Uber/Airbnb inspired
+- smooth animations
+- dark/light mode
+- modern typography
+- floating UI elements
+- responsive mobile-first design
+
+==================================================
+MAIN WEBSITE STRUCTURE
+
+The homepage must have TWO MAJOR SECTIONS:
+
+1. Ride Compare
+2. CabScan Pool
+
+==================================================
+SECTION 1 — RIDE COMPARE
+
+Purpose:
+Compare estimated fares from ride providers globally and redirect users to provider apps/websites with routes prefilled.
+
+---
+
+SUPPORTED PROVIDERS
+
+India:
+
+- Uber
+- Ola
+- Rapido
+- BluSmart
+- inDrive
+
+International:
+
+- Lyft
+- Bolt
+- Careem
+- Grab
+- Gojek
+- DiDi
+- Yandex Go
+
+Local:
+
+- Kashmir Taxi Union
+- Srinagar Airport Taxi
+- Delhi Local Taxi
+
+---
+
+GLOBAL LOCATION SEARCH
+
+CRITICAL REQUIREMENT:
+
+Search must behave very close to:
+
+- Google Maps
+- Uber
+- Ola
+- Rapido
+
+Users must be able to search:
+
+- buildings
+- apartments
+- societies
+- colonies
+- offices
+- landmarks
+- malls
+- airports
+- villages
+- roads
+- hotels
+- metro stations
+- tourist attractions
+- hospitals
+- schools
+- local businesses
+- exact local addresses
+
+Examples that MUST work:
+
+- Jai Hind Building JVTS Garden Chhatarpur
+- Saket Metro Station
+- DLF Cyber City
+- Dal Lake Srinagar
+- Burj Khalifa
+- Times Square
+- Eiffel Tower
+
+---
+
+LOCATION SEARCH IMPLEMENTATION
+
+Use HYBRID SEARCH SYSTEM:
+
+Primary:
+
+- Geoapify Autocomplete API
+
+Fallbacks:
+
+- Photon
+- OpenStreetMap
+- Nominatim
+
+IMPORTANT:
+Merge and rank results intelligently.
+
+Search Features:
+
+- fuzzy matching
+- typo tolerance
+- partial spelling support
+- proximity bias
+- formatted dropdown suggestions
+- recent searches
+- exact latitude/longitude
+- keyboard navigation
+- debounce optimization
+- loading states
+- caching
+- mobile-friendly dropdown
+
+Strong optimization for:
+
+- Delhi NCR
+- Chhatarpur
+- Saket
+- Gurgaon
+- Noida
+- Ghaziabad
+- Mumbai
+- Bengaluru
+- Srinagar
+
+Use environment variable:
+GEOAPIFY_API_KEY
+
+---
+
+MAPS
+
+Use:
+
+- Leaflet.js
+- OpenStreetMap tiles
+
+Features:
+
+- pickup marker
+- destination marker
+- route polyline
+- route preview
+- estimated travel time
+- estimated distance
+- responsive map UI
+
+---
+
+FARE ESTIMATION ENGINE
+
+IMPORTANT:
+Do NOT use fake static prices.
+
+Show:
+“Estimated fare — actual prices may vary in real time.”
+
+Pricing logic must include:
+
+- base fare
+- per km pricing
+- per minute pricing
+- surge multiplier
+- city multiplier
+- traffic multiplier
+- airport surcharge
+- toll estimate
+- night pricing
+
+Different logic for:
+
+- Uber Go
+- Uber Premier
+- Ola Mini
+- Ola Prime
+- Rapido Bike
+- Rapido Auto
+- BluSmart
+- inDrive
+
+Improve realism for:
+
+- Delhi NCR
+- airport routes
+- Gurgaon
+- Noida
+- traffic-heavy cities
+
+---
+
+PROVIDER CARDS
+
+Each provider card should show:
+
+- provider logo
+- estimated fare
+- ETA
+- ride category
+- surge badge
+- EV badge
+- cheapest badge
+- fastest badge
+- Open App button
+
+---
+
+DEEP LINKING
+
+IMPORTANT:
+When clicking provider button:
+
+1. Try opening native app FIRST
+2. If app unavailable → fallback to provider website
+
+Support:
+
+- Android
+- iPhone
+- mobile browsers
+
+Use:
+
+- deep links
+- Android intent URLs
+- iOS URL schemes
+
+Examples:
+
+- uber://
+- ola://
+- rapido://
+- indrive://
+
+Preserve:
+
+- pickup coordinates
+- destination coordinates
+- route prefill
+
+==================================================
+SECTION 2 — CABSCAN POOL
+
+Purpose:
+Global professional ride-sharing/carpooling website.
+
+Inspired by:
+
+- BlaBlaCar
+- Uber Shuttle
+- office commute platforms
+
+Users can:
+
+- offer rides
+- request rides
+- join rides
+- accept passengers
+- match nearby routes
+
+---
+
+DRIVER + PASSENGER SYSTEM
+
+Drivers:
+
+- post rides
+- define seats
+- define stops
+- accept nearby ride requests
+
+Passengers:
+
+- request rides
+- search rides
+- post route requests
+
+---
+
+SMART ROUTE MATCHING
+
+Match users based on:
+
+- route overlap
+- pickup proximity
+- destination proximity
+- time
+- seat availability
+
+Example:
+Driver:
+Noida → Gurgaon
+
+Passenger:
+South Delhi → Cyber City
+
+System should suggest possible overlap.
+
+---
+
+LIVE RIDE TRACKING
+
+Add live tracking map on Pool Ride pages.
+
+Use:
+
+- browser geolocation
+- Leaflet
+- OpenStreetMap
+
+Features:
+
+- moving driver marker
+- live ETA
+- route polyline
+- pickup marker
+- destination marker
+- trip progress
+
+Driver Controls:
+
+- Start Ride
+- Share Live Location
+- End Ride
+
+Passenger Features:
+
+- live tracking
+- ETA updates
+- route visibility
+
+Handle:
+
+- location denied
+- offline mode
+- GPS unavailable
+
+---
+
+VERIFIED PROFILES
+
+Professional ecosystem.
+
+Add:
+
+- verified badge
+- email verification
+- phone verification
+- optional ID verification placeholder
+- trust score
+- ratings/reviews
+- report/block system
+
+---
+
+RIDE POSTING FORM
+
+Fields:
+
+- from
+- to
+- date
+- time
+- seats
+- luggage support
+- gender preference
+- smoking preference
+- music preference
+- fare split
+- ride notes
+
+---
+
+SAFETY FEATURES
+
+Add:
+
+- SOS button placeholder
+- emergency contacts placeholder
+- share trip
+- ride history
+- report user
+- block user
+
+---
+
+CHAT SYSTEM
+
+Add:
+
+- ride chat
+- passenger approval
+- notifications UI
+
+==================================================
+PAGES
+
+Create:
+
+- Home
+- Compare Rides
+- CabScan Pool
+- Offer Ride
+- Find Ride
+- About
+- Contact
+- Blog
+- Privacy Policy
+- Terms
+- Safety
+
+==================================================
+CONTACT DETAILS
+
+Use everywhere:
+info.cabscan@gmail.com
+
+Replace ALL references to:
+partners@cabscan.com
+
+==================================================
+TECH STACK
+
+Frontend:
+
+- React
+- TypeScript
+- TailwindCSS
+- Vite
+
+Backend:
+
+- Firebase
+- Firestore
+- Firebase Authentication
+
+Maps:
+
+- Leaflet
+- OpenStreetMap
+- Geoapify
+
+State:
+
+- React Query
+- Zustand
+
+Hosting:
+
+- Firebase Hosting
+  OR
+- Vercel compatible
+
+==================================================
+AUTHENTICATION
+
+Support:
+
+- Google login
+- Email login
+- Phone OTP login
+
+==================================================
+ADMIN DASHBOARD
+
+Create admin panel for:
+
+- user moderation
+- ride moderation
+- analytics
+- provider analytics
+- reports handling
+
+==================================================
+PERFORMANCE + SEO
+
+Add:
+
+- SEO metadata
+- sitemap
+- OpenGraph tags
+- lazy loading
+- code splitting
+- image optimization
+- caching
+- responsive optimization
+
+==================================================
+CODE QUALITY REQUIREMENTS
+
+CRITICAL:
+
+- No "zod/v4" import issues
+- No TypeScript errors
+- No unresolved imports
+- No unsafe casts
+- No missing dependencies
+- No build failures
+- Ensure Replit publishing succeeds
+- Ensure Firebase deployment succeeds
+- Ensure Vercel deployment succeeds
+
+Add:
+
+- proper interfaces
+- null safety
+- explicit returns
+- reusable components
+- scalable folder structure
+
+==================================================
+FINAL VALIDATION
+
+Before finishing:
+
+1. Run full typecheck
+2. Run production build
+3. Ensure zero TypeScript errors
+4. Ensure no publishing/deployment errors
+5. Ensure location search works deeply worldwide
+6. Ensure provider deep links work
+7. Ensure mobile responsiveness
+8. Ensure all pages load correctly
+9. Ensure maps work
+10. Generate README with deployment instructions
+11. Generate environment variable template
+
+Generate COMPLETE WORKING WEBSITE CODEBASE.
+Do NOT generate placeholders only.

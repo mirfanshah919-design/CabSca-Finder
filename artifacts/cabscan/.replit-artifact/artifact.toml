@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "CabScan"
+version = "1.0.0"
+id = "artifacts/cabscan"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23010
+
+[services.development]
+run = "pnpm --filter @workspace/cabscan run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cabscan", "run", "build" ]
+publicDir = "artifacts/cabscan/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23010"
+BASE_PATH = "/"
