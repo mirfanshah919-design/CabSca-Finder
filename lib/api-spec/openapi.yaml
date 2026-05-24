@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: CabScan API — ride comparison and pool rides
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: rides
+    description: Pool ride operations
+  - name: profiles
+    description: User profile operations
+  - name: reviews
+    description: Rating and review operations
+  - name: messages
+    description: Chat message operations
+  - name: stats
+    description: Analytics and stats
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +34,362 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /rides:
+    get:
+      operationId: listRides
+      tags: [rides]
+      summary: List available pool rides
+      parameters:
+        - name: fromLat
+          in: query
+          schema: { type: number }
+        - name: fromLng
+          in: query
+          schema: { type: number }
+        - name: toLat
+          in: query
+          schema: { type: number }
+        - name: toLng
+          in: query
+          schema: { type: number }
+        - name: date
+          in: query
+          schema: { type: string }
+        - name: seats
+          in: query
+          schema: { type: integer }
+        - name: status
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of pool rides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PoolRide"
+    post:
+      operationId: createRide
+      tags: [rides]
+      summary: Create a new pool ride offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PoolRideInput"
+      responses:
+        "201":
+          description: Created ride
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoolRide"
+
+  /rides/{id}:
+    get:
+      operationId: getRide
+      tags: [rides]
+      summary: Get a pool ride by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Pool ride
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoolRide"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateRide
+      tags: [rides]
+      summary: Update a pool ride
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PoolRideUpdate"
+      responses:
+        "200":
+          description: Updated ride
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoolRide"
+    delete:
+      operationId: deleteRide
+      tags: [rides]
+      summary: Delete a pool ride
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /rides/{id}/join:
+    post:
+      operationId: joinRide
+      tags: [rides]
+      summary: Request to join a pool ride
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRideInput"
+      responses:
+        "200":
+          description: Join request result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+
+  /rides/{id}/requests:
+    get:
+      operationId: getRideRequests
+      tags: [rides]
+      summary: Get join requests for a ride
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List of join requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JoinRequest"
+
+  /rides/{id}/requests/{requestId}:
+    patch:
+      operationId: updateJoinRequest
+      tags: [rides]
+      summary: Accept or reject a join request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRequestUpdate"
+      responses:
+        "200":
+          description: Updated join request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+
+  /profiles:
+    get:
+      operationId: listProfiles
+      tags: [profiles]
+      summary: List user profiles
+      responses:
+        "200":
+          description: List of profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserProfile"
+    post:
+      operationId: createProfile
+      tags: [profiles]
+      summary: Create or upsert user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileInput"
+      responses:
+        "201":
+          description: Created profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /profiles/{id}:
+    get:
+      operationId: getProfile
+      tags: [profiles]
+      summary: Get a user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateProfile
+      tags: [profiles]
+      summary: Update a user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: List reviews for a user
+      parameters:
+        - name: profileId
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: Create a review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "201":
+          description: Created review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+  /messages:
+    get:
+      operationId: listMessages
+      tags: [messages]
+      summary: List messages for a ride
+      parameters:
+        - name: rideId
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: createMessage
+      tags: [messages]
+      summary: Send a message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Created message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /stats/rides:
+    get:
+      operationId: getRideStats
+      tags: [stats]
+      summary: Get aggregated ride statistics
+      responses:
+        "200":
+          description: Ride stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideStats"
+
+  /stats/recent:
+    get:
+      operationId: getRecentActivity
+      tags: [stats]
+      summary: Get recent ride activity feed
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +397,205 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    PoolRide:
+      type: object
+      required: [id, fromAddress, toAddress, fromLat, fromLng, toLat, toLng, date, time, seats, seatsLeft, status, driverName, driverAvatar, driverRating, driverTrips, farePerSeat, createdAt]
+      properties:
+        id: { type: integer }
+        fromAddress: { type: string }
+        toAddress: { type: string }
+        fromLat: { type: number }
+        fromLng: { type: number }
+        toLat: { type: number }
+        toLng: { type: number }
+        date: { type: string }
+        time: { type: string }
+        seats: { type: integer }
+        seatsLeft: { type: integer }
+        status: { type: string }
+        driverName: { type: string }
+        driverAvatar: { type: ["string", "null"] }
+        driverRating: { type: number }
+        driverTrips: { type: integer }
+        farePerSeat: { type: number }
+        luggageAllowed: { type: boolean }
+        smokingAllowed: { type: boolean }
+        musicAllowed: { type: boolean }
+        genderPreference: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        profileId: { type: ["integer", "null"] }
+        createdAt: { type: string }
+
+    PoolRideInput:
+      type: object
+      required: [fromAddress, toAddress, fromLat, fromLng, toLat, toLng, date, time, seats, farePerSeat, driverName]
+      properties:
+        fromAddress: { type: string }
+        toAddress: { type: string }
+        fromLat: { type: number }
+        fromLng: { type: number }
+        toLat: { type: number }
+        toLng: { type: number }
+        date: { type: string }
+        time: { type: string }
+        seats: { type: integer }
+        farePerSeat: { type: number }
+        driverName: { type: string }
+        driverAvatar: { type: string }
+        luggageAllowed: { type: boolean }
+        smokingAllowed: { type: boolean }
+        musicAllowed: { type: boolean }
+        genderPreference: { type: string }
+        notes: { type: string }
+        profileId: { type: integer }
+
+    PoolRideUpdate:
+      type: object
+      properties:
+        status: { type: string }
+        seatsLeft: { type: integer }
+        notes: { type: string }
+        farePerSeat: { type: number }
+
+    JoinRequest:
+      type: object
+      required: [id, rideId, passengerName, seats, status, createdAt]
+      properties:
+        id: { type: integer }
+        rideId: { type: integer }
+        passengerName: { type: string }
+        passengerAvatar: { type: ["string", "null"] }
+        seats: { type: integer }
+        pickupAddress: { type: ["string", "null"] }
+        status: { type: string }
+        profileId: { type: ["integer", "null"] }
+        createdAt: { type: string }
+
+    JoinRideInput:
+      type: object
+      required: [passengerName, seats]
+      properties:
+        passengerName: { type: string }
+        passengerAvatar: { type: string }
+        seats: { type: integer }
+        pickupAddress: { type: string }
+        profileId: { type: integer }
+
+    JoinRequestUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }
+
+    UserProfile:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        avatar: { type: ["string", "null"] }
+        phone: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        verified: { type: boolean }
+        trustScore: { type: number }
+        totalRides: { type: integer }
+        rating: { type: number }
+        bio: { type: ["string", "null"] }
+        createdAt: { type: string }
+
+    UserProfileInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        avatar: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        bio: { type: string }
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        avatar: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        bio: { type: string }
+        verified: { type: boolean }
+
+    Review:
+      type: object
+      required: [id, profileId, reviewerName, rating, createdAt]
+      properties:
+        id: { type: integer }
+        profileId: { type: integer }
+        reviewerName: { type: string }
+        reviewerAvatar: { type: ["string", "null"] }
+        rating: { type: number }
+        comment: { type: ["string", "null"] }
+        createdAt: { type: string }
+
+    ReviewInput:
+      type: object
+      required: [profileId, reviewerName, rating]
+      properties:
+        profileId: { type: integer }
+        reviewerName: { type: string }
+        reviewerAvatar: { type: string }
+        rating: { type: number }
+        comment: { type: string }
+
+    Message:
+      type: object
+      required: [id, rideId, senderName, text, createdAt]
+      properties:
+        id: { type: integer }
+        rideId: { type: integer }
+        senderName: { type: string }
+        senderAvatar: { type: ["string", "null"] }
+        text: { type: string }
+        createdAt: { type: string }
+
+    MessageInput:
+      type: object
+      required: [rideId, senderName, text]
+      properties:
+        rideId: { type: integer }
+        senderName: { type: string }
+        senderAvatar: { type: string }
+        text: { type: string }
+
+    RideStats:
+      type: object
+      required: [totalRides, activeRides, totalPassengers, citiesServed, avgRating]
+      properties:
+        totalRides: { type: integer }
+        activeRides: { type: integer }
+        totalPassengers: { type: integer }
+        citiesServed: { type: integer }
+        avgRating: { type: number }
+        ridesThisWeek: { type: integer }
+        topRoutes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopRoute"
+
+    TopRoute:
+      type: object
+      required: [from, to, count]
+      properties:
+        from: { type: string }
+        to: { type: string }
+        count: { type: integer }
+
+    ActivityItem:
+      type: object
+      required: [id, type, description, createdAt]
+      properties:
+        id: { type: integer }
+        type: { type: string }
+        description: { type: string }
+        avatar: { type: ["string", "null"] }
+        createdAt: { type: string }

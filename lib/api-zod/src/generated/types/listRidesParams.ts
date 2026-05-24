@@ -6,6 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
-}
+export type ListRidesParams = {
+fromLat?: number;
+fromLng?: number;
+toLat?: number;
+toLng?: number;
+date?: string;
+seats?: number;
+status?: string;
+};
