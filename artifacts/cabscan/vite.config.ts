@@ -22,12 +22,4 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
-  server: {
-    port,
-    host: "0.0.0.0",
-  },
-  preview: {
-    port,
-    host: "0.0.0.0",
-  },
-});
+  });
