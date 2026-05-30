@@ -1,0 +1,547 @@
+Here's the complete prompt to paste into Replit Agent:
+
+---
+
+## CABSCAN — COMPLETE FIX: VERCEL BUILD ERRORS + FARE REDESIGN
+
+---
+
+### PART 1 — FIX ALL VERCEL BUILD ERRORS
+
+**Fix 1 — vite.config.ts PORT error (CRITICAL):**
+
+The Vercel build is crashing with:
+`Error: PORT environment variable is required but was not provided`
+
+Fix `vite.config.ts` — remove ANY code that throws if PORT is missing. Replace with:
+
+```ts
+server: {
+  port: parseInt(process.env.PORT ?? '5173', 10),
+}
+```
+
+Never throw on missing env vars in config files. Vercel does not inject PORT at build time.
+
+**Fix 2 — Make ALL environment variables safe at build time:**
+
+Audit every single file. Replace any pattern like:
+```ts
+if (!process.env.XYZ) throw new Error(...)
+```
+With safe fallbacks:
+```ts
+const API_KEY = process.env.GEOAPIFY_API_KEY ?? '';
+const PORT = parseInt(process.env.PORT ?? '5173', 10);
+```
+
+**Fix 3 — Create `vercel.json` in project root:**
+
+```json
+{
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+**Fix 4 — Remove all Node-only APIs from top-level module scope:**
+
+Any use of `window`, `document`, `localStorage` at module level must be wrapped:
+```ts
+if (typeof window !== 'undefined') {
+  // safe to use window here
+}
+```
+Or moved inside `useEffect()`.
+
+**Fix 5 — Fix all imports:**
+
+- No broken path aliases
+- No missing modules
+- No `require()` in ESM files
+- All static assets must be in `/public` folder, referenced as `/filename.ext`
+
+**Fix 6 — Confirm `package.json` build script:**
+
+```json
+"scripts": {
+  "build": "vite build",
+  "dev": "vite",
+  "preview": "vite preview"
+}
+```
+
+No pre-build step that depends on runtime env vars.
+
+**Fix 7 — tsconfig.json:**
+
+Must not block Vite build. Ensure:
+```json
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true
+  }
+}
+```
+
+---
+
+### PART 2 — REMOVE ALL FAKE PRICES — IMPLEMENT HONEST FARE DISPLAY
+
+**REMOVE completely:**
+- All hardcoded fare numbers
+- All fake price estimates
+- Any static ₹ amounts shown as "estimated fare"
+- Any price comparison UI based on made-up numbers
+
+**REPLACE with this system:**
+
+Each provider card must show ONLY:
+
+```
+[Provider Logo]  [CHEAPEST 🏆]  or  [FASTEST ⚡]  badge
+
+Uber Go
+~18 min · 8.2 km · Economy · Car
+
+[Open Uber →]
+```
+
+No rupee amounts. No fake prices. Ever.
+
+---
+
+### PART 3 — TRAVEL TIME + DISTANCE (OpenRouteService API)
+
+Use **OpenRouteService** (free, no credit card) to get real route data.
+
+API endpoint:
+```
+https://api.openrouteservice.org/v2/directions/driving-car
+```
+
+Environment variable:
+```
+OPENROUTE_API_KEY
+```
+
+Free signup: https://openrouteservice.org/dev/#/signup
+
+Implementation:
+
+```ts
+const getRouteData = async (
+  pickupLat: number,
+  pickupLng: number,
+  dropLat: number,
+  dropLng: number
+): Promise<{ distanceKm: number; durationMin: number }> => {
+  const key = process.env.OPENROUTE_API_KEY ?? import.meta.env.VITE_OPENROUTE_API_KEY ?? '';
+  
+  if (!key) {
+    // Fallback: straight-line Haversine distance estimate
+    const R = 6371;
+    const dLat = ((dropLat - pickupLat) * Math.PI) / 180;
+    const dLng = ((dropLng - pickupLng) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((pickupLat * Math.PI) / 180) *
+      Math.cos((dropLat * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+    const distanceKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1.3;
+    const durationMin = Math.round((distanceKm / 25) * 60);
+    return { distanceKm: Math.round(distanceKm * 10) / 10, durationMin };
+  }
+
+  const res = await fetch(
+    `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${key}&start=${pickupLng},${pickupLat}&end=${dropLng},${dropLat}`
+  );
+  const data = await res.json();
+  const segment = data.features[0].properties.segments[0];
+  return {
+    distanceKm: Math.round((segment.distance / 1000) * 10) / 10,
+    durationMin: Math.round(segment.duration / 60),
+  };
+};
+```
+
+Always show real distance and time. If API key missing, use Haversine fallback silently — never crash.
+
+---
+
+### PART 4 — PROVIDER TIER RANKING SYSTEM
+
+No prices. Just rank providers by category tier. This ordering is reliably true:
+
+```ts
+const PROVIDER_TIERS = [
+  {
+    id: 'rapido_bike',
+    name: 'Rapido Bike',
+    category: 'Bike',
+    tier: 1, // cheapest category
+    badge: 'CHEAPEST',
+    badgeColor: 'green',
+    eta: '3–6 min',
+    regions: ['india'],
+  },
+  {
+    id: 'rapido_auto',
+    name: 'Rapido Auto',
+    category: 'Auto',
+    tier: 2,
+    badge: null,
+    eta: '5–8 min',
+    regions: ['india'],
+  },
+  {
+    id: 'ola_mini',
+    name: 'Ola Mini',
+    category: 'Mini · Car',
+    tier: 3,
+    badge: null,
+    eta: '5–10 min',
+    regions: ['india'],
+  },
+  {
+    id: 'indrive',
+    name: 'inDrive',
+    category: 'Sedan · Negotiable',
+    tier: 3,
+    badge: 'NEGOTIATE PRICE',
+    badgeColor: 'blue',
+    eta: '7–12 min',
+    regions: ['india', 'international'],
+  },
+  {
+    id: 'blusmart',
+    name: 'BluSmart',
+    category: 'EV · Car',
+    tier: 3,
+    badge: 'EV 🌿',
+    badgeColor: 'teal',
+    eta: '8–15 min',
+    regions: ['india'],
+  },
+  {
+    id: 'uber_go',
+    name: 'Uber Go',
+    category: 'Economy · Car',
+    tier: 4,
+    badge: null,
+    eta: '4–8 min',
+    regions: ['india', 'international'],
+  },
+  {
+    id: 'ola_prime',
+    name: 'Ola Prime',
+    category: 'Sedan · Car',
+    tier: 5,
+    badge: null,
+    eta: '6–12 min',
+    regions: ['india'],
+  },
+  {
+    id: 'uber_premier',
+    name: 'Uber Premier',
+    category: 'Premium · Car',
+    tier: 6,
+    badge: 'PREMIUM',
+    badgeColor: 'gold',
+    eta: '8–15 min',
+    regions: ['india', 'international'],
+  },
+  // International
+  {
+    id: 'bolt',
+    name: 'Bolt',
+    category: 'Economy · Car',
+    tier: 3,
+    badge: 'CHEAPEST',
+    badgeColor: 'green',
+    eta: '5–10 min',
+    regions: ['international'],
+  },
+  {
+    id: 'lyft',
+    name: 'Lyft',
+    category: 'Economy · Car',
+    tier: 4,
+    badge: null,
+    eta: '5–10 min',
+    regions: ['us'],
+  },
+  {
+    id: 'grab',
+    name: 'Grab',
+    category: 'Economy · Car',
+    tier: 3,
+    badge: null,
+    eta: '5–12 min',
+    regions: ['southeast_asia'],
+  },
+  {
+    id: 'gojek',
+    name: 'Gojek',
+    category: 'Bike / Car',
+    tier: 2,
+    badge: 'CHEAPEST',
+    badgeColor: 'green',
+    eta: '3–8 min',
+    regions: ['southeast_asia'],
+  },
+  {
+    id: 'careem',
+    name: 'Careem',
+    category: 'Economy · Car',
+    tier: 3,
+    badge: null,
+    eta: '6–12 min',
+    regions: ['middle_east'],
+  },
+  {
+    id: 'didi',
+    name: 'DiDi',
+    category: 'Economy · Car',
+    tier: 3,
+    badge: null,
+    eta: '5–10 min',
+    regions: ['china', 'latam', 'australia'],
+  },
+  {
+    id: 'yandex_go',
+    name: 'Yandex Go',
+    category: 'Economy · Car',
+    tier: 3,
+    badge: null,
+    eta: '4–8 min',
+    regions: ['russia', 'cis'],
+  },
+];
+```
+
+Sort cards by tier (low = cheap first). Top tier-1 card always gets **CHEAPEST 🏆** badge.
+
+---
+
+### PART 5 — PROVIDER CARD UI DESIGN
+
+Each card must look like this (glassmorphism, dark/light mode):
+
+```
+┌─────────────────────────────────────────┐
+│  [Logo]  Rapido Bike      [CHEAPEST 🏆] │
+│          Bike                           │
+│                                         │
+│  ⏱ ~14 min    📍 8.2 km    ETA 3–6 min │
+│                                         │
+│  [         Open Rapido →              ] │
+└─────────────────────────────────────────┘
+```
+
+Rules:
+- NO rupee symbol anywhere on card
+- NO price numbers
+- Show: provider name, category, distance, travel time, ETA, badge
+- Big prominent CTA button: "Open [Provider Name] →"
+- Cards sorted cheapest first
+- Smooth entrance animation (stagger cards 50ms apart)
+- Hover: subtle glow effect
+- Badge colors: green=cheapest, gold=premium, teal=EV, blue=negotiate
+
+---
+
+### PART 6 — DEEP LINKS WITH COORDINATE PREFILL
+
+When user clicks "Open [Provider]":
+
+1. On mobile → try native app deep link first
+2. If app not installed → fall back to mobile website
+3. On desktop → open provider website directly
+
+```ts
+interface DeepLinkParams {
+  pickupLat: number;
+  pickupLng: number;
+  dropLat: number;
+  dropLng: number;
+  pickupName?: string;
+  dropName?: string;
+}
+
+const openProvider = (providerId: string, params: DeepLinkParams) => {
+  const { pickupLat, pickupLng, dropLat, dropLng } = params;
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+
+  const links: Record<string, { app: string; web: string }> = {
+    uber_go: {
+      app: `uber://?action=setPickup&pickup[latitude]=${pickupLat}&pickup[longitude]=${pickupLng}&dropoff[latitude]=${dropLat}&dropoff[longitude]=${dropLng}`,
+      web: `https://m.uber.com/ul/?action=setPickup&pickup[latitude]=${pickupLat}&pickup[longitude]=${pickupLng}&dropoff[latitude]=${dropLat}&dropoff[longitude]=${dropLng}`,
+    },
+    uber_premier: {
+      app: `uber://?action=setPickup&pickup[latitude]=${pickupLat}&pickup[longitude]=${pickupLng}&dropoff[latitude]=${dropLat}&dropoff[longitude]=${dropLng}&product_id=premier`,
+      web: `https://m.uber.com/ul/?action=setPickup&pickup[latitude]=${pickupLat}&pickup[longitude]=${pickupLng}&dropoff[latitude]=${dropLat}&dropoff[longitude]=${dropLng}`,
+    },
+    ola_mini: {
+      app: `ola://booking?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&drop_lat=${dropLat}&drop_lng=${dropLng}&category=mini`,
+      web: `https://book.olacabs.com/?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&drop_lat=${dropLat}&drop_lng=${dropLng}`,
+    },
+    ola_prime: {
+      app: `ola://booking?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&drop_lat=${dropLat}&drop_lng=${dropLng}&category=prime`,
+      web: `https://book.olacabs.com/?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&drop_lat=${dropLat}&drop_lng=${dropLng}`,
+    },
+    rapido_bike: {
+      app: `rapido://book?slat=${pickupLat}&slng=${pickupLng}&dlat=${dropLat}&dlng=${dropLng}&type=bike`,
+      web: `https://rapido.bike/`,
+    },
+    rapido_auto: {
+      app: `rapido://book?slat=${pickupLat}&slng=${pickupLng}&dlat=${dropLat}&dlng=${dropLng}&type=auto`,
+      web: `https://rapido.bike/`,
+    },
+    blusmart: {
+      app: `blusmart://book?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&drop_lat=${dropLat}&drop_lng=${dropLng}`,
+      web: `https://www.blusmart.in/`,
+    },
+    indrive: {
+      app: `indrive://order?from_lat=${pickupLat}&from_lng=${pickupLng}&to_lat=${dropLat}&to_lng=${dropLng}`,
+      web: `https://indrive.com/`,
+    },
+    bolt: {
+      app: `bolt://`,
+      web: `https://bolt.eu/`,
+    },
+    lyft: {
+      app: `lyft://ridetype?id=lyft&pickup[latitude]=${pickupLat}&pickup[longitude]=${pickupLng}&destination[latitude]=${dropLat}&destination[longitude]=${dropLng}`,
+      web: `https://www.lyft.com/ride`,
+    },
+    grab: {
+      app: `grab://open?screenType=BOOKING&sourceLocation=${pickupLat},${pickupLng}&destinationLocation=${dropLat},${dropLng}`,
+      web: `https://www.grab.com/`,
+    },
+    gojek: {
+      app: `gojek://`,
+      web: `https://www.gojek.com/`,
+    },
+    careem: {
+      app: `careem://`,
+      web: `https://www.careem.com/`,
+    },
+    didi: {
+      app: `DiDi://`,
+      web: `https://www.didiglobal.com/`,
+    },
+    yandex_go: {
+      app: `yandexmaps://`,
+      web: `https://go.yandex/`,
+    },
+  };
+
+  const providerLinks = links[providerId];
+  if (!providerLinks) return;
+
+  if (isMobile) {
+    // Try app first, fall back to web after 2 seconds
+    const start = Date.now();
+    window.location.href = providerLinks.app;
+    setTimeout(() => {
+      if (Date.now() - start < 2500) {
+        window.open(providerLinks.web, '_blank');
+      }
+    }, 2000);
+  } else {
+    window.open(providerLinks.web, '_blank');
+  }
+};
+```
+
+---
+
+### PART 7 — "OPEN ALL APPS" BUTTON
+
+Add a prominent button above the provider cards:
+
+```
+[ 🚀 Open All Apps Simultaneously ]
+```
+
+When clicked → opens top 3 cheapest providers in new tabs so user can compare real prices side by side instantly.
+
+```ts
+const openAllApps = (providers: Provider[], params: DeepLinkParams) => {
+  const top3 = providers.slice(0, 3); // already sorted cheapest first
+  top3.forEach((provider, index) => {
+    setTimeout(() => {
+      openProvider(provider.id, params);
+    }, index * 300); // stagger 300ms to avoid popup blocking
+  });
+};
+```
+
+---
+
+### PART 8 — DISCLAIMER
+
+Show this clearly below the provider cards:
+
+```
+ℹ️ Fares shown in provider apps are live and accurate.
+   CabScan shows travel time and distance only.
+   Tap any provider to see real-time pricing.
+```
+
+Style: small, subtle, italic, not intrusive.
+
+---
+
+### PART 9 — LOCATION SEARCH (keep existing, fix if broken)
+
+Keep the hybrid search system. Ensure:
+
+- Geoapify API key read as `import.meta.env.VITE_GEOAPIFY_API_KEY`
+- Fallback to Nominatim/Photon if key missing — never crash
+- Recent searches stored in localStorage
+- Debounce 300ms
+- Min 3 characters before searching
+- Keyboard navigation (arrow keys + enter)
+- Mobile-friendly dropdown
+
+---
+
+### PART 10 — MAP (keep existing, fix if broken)
+
+Leaflet.js + OpenStreetMap:
+
+- Pickup marker (green)
+- Drop marker (red)
+- Route polyline (blue)
+- Auto-fit bounds to show both markers
+- Must render correctly on mobile
+
+---
+
+### SUMMARY — WHAT THIS PROMPT FIXES
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 | Vercel crash: PORT env var | Remove throw, use fallback |
+| 2 | Build fails on missing env vars | Make all env vars optional |
+| 3 | No vercel.json | Add vercel.json with rewrites |
+| 4 | Fake/wrong prices shown | Remove all prices completely |
+| 5 | No honest fare info | Show distance + time instead |
+| 6 | No cheapest/best badge | Add tier-based ranking badges |
+| 7 | Deep links broken | Implement with coord prefill |
+| 8 | No "open all" feature | Add Open All Apps button |
+| 9 | window/document SSR crash | Wrap in typeof window check |
+| 10 | Broken imports | Audit and fix all imports |
+
+---
+
+**After applying:** Add these to Vercel Environment Variables:
+- `VITE_GEOAPIFY_API_KEY` = your key from geoapify.com (free tier works)
+- `VITE_OPENROUTE_API_KEY` = your key from openrouteservice.org (free)
+
+Both are free signups. No credit card needed.
