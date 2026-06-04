@@ -1,10 +1,6 @@
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from "tailwindcss/vite";
 import path from "path";
-
-const port = 5173;
-
 
 export default defineConfig({
   plugins: [
@@ -22,4 +18,4 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
-  });
+});

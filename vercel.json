@@ -1,0 +1,6 @@
+{
+  "rootDirectory": "artifacts/cabscan",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist/public",
+  "framework": "vite"
+}
